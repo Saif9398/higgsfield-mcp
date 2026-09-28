@@ -1,0 +1,12 @@
+{
+  "on_http_request": [
+    {
+      "actions": [
+        {
+          "type": "add-headers",
+          "config": { "headers": { "host": "127.0.0.1:3000" } }
+        }
+      ]
+    }
+  ]
+}
