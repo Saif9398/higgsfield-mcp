@@ -20,11 +20,15 @@ describe('Higgsfield REST contracts', () => {
     expect(JSON.parse(init!.body as string)).toEqual({ prompt: 'A coastal road', duration: 5, resolution: '720p', aspect_ratio: '16:9', generate_audio: true });
     expect(fetcher).toHaveBeenCalledTimes(1);
   });
-  it('uses the estimate endpoint and decimal strings without generating', async () => {
-    const { client, fetcher } = setup(); fetcher.mockResolvedValue(response({ credits: '1.500', usd: '0.094' }));
-    expect(await client.estimateCost(IMAGE_MODEL, { prompt: 'Portrait' })).toEqual({ credits: '1.500', usd: '0.094' });
+  it('uses the estimate endpoint, accepts numeric provider values and normalizes them without generating', async () => {
+    const { client, fetcher } = setup(); fetcher.mockResolvedValue(response({ credits: 1.5, usd: 0.094 }));
+    expect(await client.estimateCost(IMAGE_MODEL, { prompt: 'Portrait' })).toEqual({ credits: '1.5', usd: '0.094' });
     expect(fetcher.mock.calls[0]![0]).toBe(`https://api.higgsfield.ai/estimate/${IMAGE_MODEL}`);
     expect(JSON.parse(fetcher.mock.calls[0]![1]!.body as string)).toMatchObject({ batch_size: 1, enhance_prompt: true });
+  });
+  it('still accepts documented decimal-string estimate values', async () => {
+    const { client, fetcher } = setup(); fetcher.mockResolvedValue(response({ credits: '1.500', usd: '0.094' }));
+    expect(await client.estimateCost(IMAGE_MODEL, { prompt: 'Portrait' })).toEqual({ credits: '1.500', usd: '0.094' });
   });
   it('retrieves results through the status route, with no invented result endpoint', async () => {
     const { client, fetcher } = setup(); fetcher.mockResolvedValue(response({ request_id: id, status: 'completed', images: [{ url: 'https://cdn.example.com/image.jpg' }], secret: 'test-key-secret' }));
