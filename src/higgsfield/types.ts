@@ -10,9 +10,15 @@ export const requestSchema = z.object({
   video: media.optional(),
   // Provider error text is deliberately not forwarded. Unknown fields are stripped.
 });
+const decimalString = z.string().regex(/^\d+(\.\d+)?$/);
+const decimal = z.union([
+  decimalString,
+  z.number().finite().nonnegative(),
+]).transform(value => typeof value === 'number' ? String(value) : value);
+
 export const estimateSchema = z.object({
-  credits: z.string().regex(/^\d+(\.\d+)?$/),
-  usd: z.string().regex(/^\d+(\.\d+)?$/),
+  credits: decimal,
+  usd: decimal,
 });
 export type GenerationRequest = z.infer<typeof requestSchema>;
 export type CostEstimate = z.infer<typeof estimateSchema>;
