@@ -51,14 +51,14 @@ npm run check:mcp
 npm run check:connection
 ```
 
-`check:mcp` connects using the official SDK, discovers all six tools, and calls `hf_list_models`. `check:connection` makes an authenticated **cost estimate** request; it does not submit a paid generation. It verifies access to the configured image adapter, not entitlement to every model. Health only reports process health and whether credentials are configured; it does not validate them upstream.
+`check:mcp` connects using the official SDK, discovers all six tools, and calls `hf_list_models`. `check:connection` makes an authenticated **cost estimate** request; it does not submit a paid generation. It verifies access to the configured image adapter, not entitlement to every model. Higgsfield may return a numeric quote or a pricing description for token-metered models; do not treat a description as an account-specific amount. Health only reports process health and whether credentials are configured; it does not validate them upstream.
 
 ## Tools
 
 | Tool | Behavior |
 |---|---|
 | `hf_list_models` | Supported model IDs, documentation links and parameter schemas; optional `kind` filter |
-| `hf_estimate_cost` | Live account-specific `credits` and `usd` estimate; accepts `model` and `input` |
+| `hf_estimate_cost` | Live `credits` and `usd` quote when available, or Higgsfield's token-pricing description; accepts `model` and `input` |
 | `hf_generate_video` | Submit video generation and return `request_id` immediately |
 | `hf_generate_image` | Submit image generation and return `request_id` immediately |
 | `hf_get_generation_status` | Check an existing `request_id` once |

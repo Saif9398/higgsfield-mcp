@@ -44,7 +44,7 @@ export function createMcpServer(client: HiggsfieldClient, logger: Logger, scope?
 
   server.registerTool('hf_estimate_cost', {
     title: 'Estimate Higgsfield generation cost',
-    description: 'Ask Higgsfield for an account-specific estimate before generating. Pass a supported model ID and its input parameters. Does not submit a generation.',
+    description: 'Ask Higgsfield for pricing before generating. Returns credits and USD when Higgsfield quotes an amount, or a pricing description for token-metered models. Does not submit a generation.',
     inputSchema: z.strictObject({ model: z.string().min(1).max(200), input: z.record(z.string(), z.unknown()).describe('Model parameters from hf_list_models. Validated against the selected model before sending.') }), ...metadata(true),
   }, ({ model, input }, ctx) => run('hf_estimate_cost', () => client.estimateCost(model, input, ctx.mcpReq.signal)));
 

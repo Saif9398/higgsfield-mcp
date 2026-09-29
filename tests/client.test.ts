@@ -25,6 +25,21 @@ describe('Higgsfield REST contracts', () => {
     expect(await client.estimateCost(IMAGE_MODEL, { prompt: 'Portrait' })).toEqual({ credits: '1.500', usd: '0.094' });
     expect(fetcher.mock.calls[0]![0]).toBe(`https://api.higgsfield.ai/estimate/${IMAGE_MODEL}`);
     expect(JSON.parse(fetcher.mock.calls[0]![1]!.body as string)).toMatchObject({ batch_size: 1, enhance_prompt: true });
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+  it('accepts the live Seedance token-pricing response and sends its documented parameters', async () => {
+    const { client, fetcher } = setup();
+    const description = 'Token-metered pricing. Billable video tokens = ceil(generated video seconds × output width × output height × 24 fps / 1024). Image and audio references do not count as video input. Per 1,000 video tokens: 480p/720p/1080p $0.014, 4K $0.008. Rates shown are before any applicable customer discount.';
+    fetcher.mockResolvedValue(response({ type: 'description', pricing_description: description }));
+    expect(await client.estimateCost(VIDEO_MODEL, {
+      prompt: 'A cinematic city street at dusk', duration: 5, resolution: '720p', aspect_ratio: '9:16', generate_audio: true,
+    })).toEqual({ type: 'description', pricing_description: description });
+    expect(fetcher.mock.calls[0]![0]).toBe(`https://api.higgsfield.ai/estimate/${VIDEO_MODEL}`);
+    expect(fetcher.mock.calls[0]![1]!.method).toBe('POST');
+    expect(JSON.parse(fetcher.mock.calls[0]![1]!.body as string)).toEqual({
+      prompt: 'A cinematic city street at dusk', duration: 5, resolution: '720p', aspect_ratio: '9:16', generate_audio: true,
+    });
+    expect(fetcher).toHaveBeenCalledTimes(1);
   });
   it('retrieves results through the status route, with no invented result endpoint', async () => {
     const { client, fetcher } = setup(); fetcher.mockResolvedValue(response({ request_id: id, status: 'completed', images: [{ url: 'https://cdn.example.com/image.jpg' }], secret: 'test-key-secret' }));

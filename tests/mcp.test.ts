@@ -3,7 +3,7 @@ import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/cli
 import { createMcpHandler } from '@modelcontextprotocol/server';
 import { createMcpServer } from '../src/mcp/tools.js';
 import { HiggsfieldClient } from '../src/higgsfield/client.js';
-import { IMAGE_MODEL } from '../src/higgsfield/models.js';
+import { IMAGE_MODEL, VIDEO_MODEL } from '../src/higgsfield/models.js';
 import { createLogger } from '../src/logger.js';
 
 describe('MCP tool protocol', () => {
@@ -43,6 +43,17 @@ describe('MCP tool protocol', () => {
     const result = await mcp.callTool({ name: 'hf_estimate_cost', arguments: { model: IMAGE_MODEL, input: { prompt: 'Portrait' } } });
     expect(result.structuredContent).toMatchObject({ ok: true, data: { usd: '0.1' } });
     expect(JSON.parse(fetcher.mock.calls[0]![1]!.body as string)).not.toHaveProperty('duration');
+  });
+  it('returns Seedance token pricing without inventing a numeric quote', async () => {
+    fetcher.mockResolvedValue(new Response(JSON.stringify({ type: 'description', pricing_description: 'Token-metered pricing. Rates shown are before any applicable customer discount.' })));
+    const result = await mcp.callTool({ name: 'hf_estimate_cost', arguments: { model: VIDEO_MODEL, input: {
+      prompt: 'A cinematic city street at dusk', duration: 5, resolution: '720p', aspect_ratio: '9:16', generate_audio: true,
+    } } });
+    expect(result.structuredContent).toEqual({ ok: true, data: {
+      type: 'description', pricing_description: 'Token-metered pricing. Rates shown are before any applicable customer discount.',
+    } });
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(fetcher.mock.calls[0]![0]).toBe(`https://api.higgsfield.ai/estimate/${VIDEO_MODEL}`);
   });
   it.each(['hf_get_generation_status', 'hf_get_generation_result'])('retrieves %s through status endpoint', async name => {
     fetcher.mockResolvedValue(new Response(JSON.stringify({ request_id: id, status: 'completed', video: { url: 'https://cdn.example.com/v.mp4' } })));
