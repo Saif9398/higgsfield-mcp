@@ -38,10 +38,10 @@ describe('MCP tool protocol', () => {
     expect(result.structuredContent).toMatchObject({ ok: true, data: { request_id: id, status: 'queued' } });
     expect(fetcher).toHaveBeenCalledTimes(1);
   });
-  it('estimates image inputs using image defaults', async () => {
-    fetcher.mockResolvedValue(new Response(JSON.stringify({ credits: '1', usd: '0.1' })));
+  it('estimates image inputs using image defaults and normalizes numeric provider values', async () => {
+    fetcher.mockResolvedValue(new Response(JSON.stringify({ credits: 1, usd: 0.1 })));
     const result = await mcp.callTool({ name: 'hf_estimate_cost', arguments: { model: IMAGE_MODEL, input: { prompt: 'Portrait' } } });
-    expect(result.structuredContent).toMatchObject({ ok: true, data: { usd: '0.1' } });
+    expect(result.structuredContent).toMatchObject({ ok: true, data: { credits: '1', usd: '0.1' } });
     expect(JSON.parse(fetcher.mock.calls[0]![1]!.body as string)).not.toHaveProperty('duration');
   });
   it.each(['hf_get_generation_status', 'hf_get_generation_result'])('retrieves %s through status endpoint', async name => {
