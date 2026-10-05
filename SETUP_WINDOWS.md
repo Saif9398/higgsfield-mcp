@@ -13,10 +13,11 @@ If your execution policy blocks `npm.ps1`, use `npm.cmd` in the commands below. 
 
 ## Install this project
 
-Clone the repository once it is hosted in your Git service, or copy the project directory. Open PowerShell in that directory. For this workspace:
+This repository is public and can be cloned by anyone with Git. Each installation needs its own Higgsfield credentials and local configuration. Open PowerShell and run:
 
 ```powershell
-Set-Location 'D:\Claude Code VS1\higgsfield-mcp'
+git clone https://github.com/Saif9398/higgsfield-mcp.git
+Set-Location higgsfield-mcp
 npm ci
 Copy-Item .env.example .env
 notepad .env

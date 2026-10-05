@@ -107,7 +107,7 @@ OpenAI's [Secure MCP Tunnel](https://developers.openai.com/api/docs/guides/secur
 
 - Request logs contain tool name, result/error code, HTTP status and elapsed time. Provider failure logs include a redacted correlation ID when supplied. Retain the returned request ID securely for support; prompts and output URLs are not logged.
 - Set alerts for repeated 401, balance failures, 429, upstream failures, and latency. Protect access to logs and deployment secrets.
-- Generation POSTs have no automatic retry because provider submission has no documented idempotency key. An ambiguous network failure requires checking the account console first.
+- Generation POSTs have no automatic retry, and the current client does not send provider idempotency keys. Higgsfield now documents [idempotent requests](https://docs.higgsfield.ai/docs/concepts/idempotency), but this implementation does not yet use that feature. An ambiguous network failure requires checking the account console first.
 - Keep the request ID externally if you need durable workflow history. Polling timeout/disconnect does not cancel a paid upstream generation.
 - SIGTERM/SIGINT stop HTTP acceptance and close MCP handlers; shutdown has a ten-second force-close bound. The container has a health check.
 - Rotate keys through environment/secrets configuration and restart. All keys and model adapters should be reviewed periodically against current official docs.
