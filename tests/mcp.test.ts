@@ -44,6 +44,13 @@ describe('MCP tool protocol', () => {
     expect(result.structuredContent).toMatchObject({ ok: true, data: { usd: '0.1' } });
     expect(JSON.parse(fetcher.mock.calls[0]![1]!.body as string)).not.toHaveProperty('duration');
   });
+  it('normalizes numeric provider estimates through the MCP tool', async () => {
+    fetcher.mockResolvedValue(new Response(JSON.stringify({ credits: 1.5, usd: 0.094 })));
+    const result = await mcp.callTool({ name: 'hf_estimate_cost', arguments: { model: IMAGE_MODEL, input: { prompt: 'Portrait' } } });
+    expect(result.structuredContent).toEqual({ ok: true, data: { credits: '1.5', usd: '0.094' } });
+    expect(fetcher.mock.calls[0]![0]).toBe(`https://api.higgsfield.ai/estimate/${IMAGE_MODEL}`);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
   it('returns Seedance token pricing without inventing a numeric quote', async () => {
     fetcher.mockResolvedValue(new Response(JSON.stringify({ type: 'description', pricing_description: 'Token-metered pricing. Rates shown are before any applicable customer discount.' })));
     const result = await mcp.callTool({ name: 'hf_estimate_cost', arguments: { model: VIDEO_MODEL, input: {

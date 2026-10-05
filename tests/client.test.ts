@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { HiggsfieldClient } from '../src/higgsfield/client.js';
 import { IMAGE_MODEL, VIDEO_MODEL } from '../src/higgsfield/models.js';
+import { estimateSchema } from '../src/higgsfield/types.js';
 import { createRedactor } from '../src/logger.js';
 
 const id = 'd7e6c0f3-6699-4f6c-bb45-2ad7fd9158ff';
@@ -25,6 +26,27 @@ describe('Higgsfield REST contracts', () => {
     expect(await client.estimateCost(IMAGE_MODEL, { prompt: 'Portrait' })).toEqual({ credits: '1.500', usd: '0.094' });
     expect(fetcher.mock.calls[0]![0]).toBe(`https://api.higgsfield.ai/estimate/${IMAGE_MODEL}`);
     expect(JSON.parse(fetcher.mock.calls[0]![1]!.body as string)).toMatchObject({ batch_size: 1, enhance_prompt: true });
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+  it.each([
+    [{ credits: 1.5, usd: 0.094 }, { credits: '1.5', usd: '0.094' }],
+    [{ credits: 1.5, usd: '0.094' }, { credits: '1.5', usd: '0.094' }],
+    [{ credits: '1.500', usd: 0.094 }, { credits: '1.500', usd: '0.094' }],
+    [{ credits: 0, usd: 0 }, { credits: '0', usd: '0' }],
+  ])('normalizes numeric estimate amounts without changing decimal strings: %j', async (body, expected) => {
+    const { client, fetcher } = setup(); fetcher.mockResolvedValue(response(body));
+    expect(await client.estimateCost(IMAGE_MODEL, { prompt: 'Portrait' })).toEqual(expected);
+    expect(fetcher.mock.calls[0]![0]).toBe(`https://api.higgsfield.ai/estimate/${IMAGE_MODEL}`);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+  it.each([-1, NaN, Infinity, -Infinity])('rejects invalid numeric estimate amounts: %s', amount => {
+    // Check non-finite values directly because JSON serializes them as null.
+    expect(estimateSchema.safeParse({ credits: amount, usd: '0.1' }).success).toBe(false);
+    expect(estimateSchema.safeParse({ credits: '1', usd: amount }).success).toBe(false);
+  });
+  it('reports negative provider estimate amounts as an invalid response without retrying', async () => {
+    const { client, fetcher } = setup(); fetcher.mockResolvedValue(response({ credits: -1, usd: 0.1 }));
+    await expect(client.estimateCost(IMAGE_MODEL, { prompt: 'Portrait' })).rejects.toMatchObject({ code: 'INVALID_RESPONSE' });
     expect(fetcher).toHaveBeenCalledTimes(1);
   });
   it('accepts the live Seedance token-pricing response and sends its documented parameters', async () => {

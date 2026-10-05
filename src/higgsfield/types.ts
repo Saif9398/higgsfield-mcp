@@ -10,9 +10,13 @@ export const requestSchema = z.object({
   video: media.optional(),
   // Provider error text is deliberately not forwarded. Unknown fields are stripped.
 });
+const estimateAmount = z.union([
+  z.string().regex(/^\d+(\.\d+)?$/),
+  z.number().finite().nonnegative().transform(value => String(value)),
+]);
 const fixedEstimateSchema = z.object({
-  credits: z.string().regex(/^\d+(\.\d+)?$/),
-  usd: z.string().regex(/^\d+(\.\d+)?$/),
+  credits: estimateAmount,
+  usd: estimateAmount,
 });
 const descriptionEstimateSchema = z.object({
   type: z.literal('description'),
